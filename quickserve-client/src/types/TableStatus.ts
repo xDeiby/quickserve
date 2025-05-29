@@ -1,0 +1,8 @@
+export enum TableStatusEnum {
+  AVAILABLE = "AVAILABLE",
+  OCCUPIED = "OCCUPIED",
+  ORDERING = "ORDERING",
+  PREPARING = "PREPARING",
+  SERVED = "SERVED",
+  BILLING = "BILLING",
+}

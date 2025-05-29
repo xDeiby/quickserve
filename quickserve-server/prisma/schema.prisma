@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma-client"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  WAITER
+  CHEF
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  ORDERING
+  PREPARING
+  SERVED
+  BILLING
+}
+
+model User {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String   @unique
+  password     String
+  role         Role
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  waiterOrders Order[]  @relation("WaiterOrders")
+  chefOrders   Order[]  @relation("ChefOrders")
+
+  @@map("users")
+}
+
+model Table {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  code       String   @unique
+  capacity   Int
+  status     TableStatus
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  orders     Order[]
+
+  @@map("tables")
+}
+
+model Order {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  code        String        @unique
+  tableId     String        @db.ObjectId
+  priority    OrderPriority @default(LOW)
+  waiterId    String        @db.ObjectId @map("waiter_id")
+  chefId      String?       @db.ObjectId @map("chef_id")
+  status      OrderStatus   @default(PENDING)
+  items       OrderItem[]   @map("order_items")
+  totalAmount Float         @map("total_amount")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  waiter      User          @relation("WaiterOrders", fields: [waiterId], references: [id])
+  chef        User?         @relation("ChefOrders", fields: [chefId], references: [id])
+  table       Table         @relation(fields: [tableId], references: [id])
+
+  @@map("orders")
+}
+
+type OrderItem {
+  menuItemId      String    @map("menu_item_id") @db.ObjectId
+  especialRequest String? @map("special_request")
+  quantity        Int
+  unitPrice       Float     @map("unit_price")
+  createdAt       DateTime  @default(now()) @map("created_at")
+}
+
+model MenuItem {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  description   String
+  price         Float
+  estimatedTime Int? @map("estimated_time")
+  category      String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("menu_items")
+}
